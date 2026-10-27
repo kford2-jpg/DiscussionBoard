@@ -1,0 +1,23 @@
+﻿@model DiscussionBoard.Models.DiscussionThread
+
+    <article class="card mb-3">
+    <div class="card-body">
+    <h3 class="h5">
+    <a asp-page="/Discussions/Details"
+asp-route-threadId="@Model.Id">
+                   @Model.Title
+                   </a>
+    </h3>
+
+    <p>
+    @(Model.Content.Length > 180
+        ? Model.Content[..180] + "..."
+        : Model.Content)
+    </p>
+
+    <small class="text-muted">
+    Started by @(Model.ApplicationUser?.UserName ?? "Unknown user")
+    · @Model.CreatedAt.ToLocalTime().ToString("g")
+    </small>
+    </div>
+    </article>

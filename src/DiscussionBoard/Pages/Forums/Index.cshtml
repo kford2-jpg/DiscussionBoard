@@ -1,8 +1,20 @@
 @page "/Forums/Index"
 @model ForumsModel
-@{ ViewData["Title"] = "Forums"; }
+
+@{
+    ViewData["Title"] = "Forums";
+}
+
 <h1>Forums</h1>
-@foreach (var forum in Model.Items)
+
+@if (Model.Items == null || !Model.Items.Any())
 {
-    <partial name="/Pages/Forums/_ForumCard.cshtml" model="forum" />
+    <p>No forums are available yet.</p>
+}
+else
+{
+    @foreach (var forum in Model.Items)
+    {
+        <partial name="/Pages/Forums/_ForumCard.cshtml" model="forum" />
+    }
 }

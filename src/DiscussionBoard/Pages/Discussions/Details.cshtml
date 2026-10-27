@@ -1,0 +1,99 @@
+﻿@page "/Discussion/{threadId:int}"
+@model DiscussionBoard.Pages.Discussions.DetailsModel
+
+@{
+    ViewData["Title"] = Model.Thread?.Title ?? "Discussion";
+}
+
+<div class="container mt-4">
+    @if (Model.Thread != null)
+    {
+        <a asp-page="/Forums/Details"
+           asp-route-id="@Model.Thread.ForumId"
+           class="btn btn-outline-secondary mb-3">
+            Back to Forum
+        </a>
+
+        <h1>@Model.Thread.Title</h1>
+
+        <p class="text-muted">
+            Started by @(Model.Thread.ApplicationUser?.UserName ?? "Unknown user")
+            · @Model.Thread.CreatedAt.ToLocalTime().ToString("g")
+        </p>
+
+        <article class="card mb-4">
+            <div class="card-body">
+                <p>@Model.Thread.Content</p>
+
+                @if (User.Identity?.IsAuthenticated == true &&
+                     User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                     == Model.Thread.ApplicationUserId)
+                {
+                    <a asp-page="/Discussions/Edit"
+                       asp-route-id="@Model.Thread.Id"
+                       class="btn btn-sm btn-outline-primary">
+                        Edit Discussion
+                    </a>
+                }
+            </div>
+        </article>
+
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <h2 class="h4">Join the discussion</h2>
+
+            <form method="post"
+                  asp-page-handler="Reply"
+                  asp-route-threadId="@Model.Thread.Id">
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-2"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.Content" class="form-label">
+                        Your reply
+                    </label>
+
+                    <textarea asp-for="Input.Content"
+                              class="form-control"
+                              rows="4"></textarea>
+
+                    <span asp-validation-for="Input.Content"
+                          class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Post Reply
+                </button>
+            </form>
+        }
+        else
+        {
+            <p>
+                <a asp-area="Identity" asp-page="/Account/Login">Sign in</a>
+                to reply to this discussion.
+            </p>
+        }
+
+        <hr />
+
+        <h2 class="h4">Replies</h2>
+
+        @if (Model.PostTree.Count == 0)
+        {
+            <p>No replies yet. Start the conversation!</p>
+        }
+        else
+        {
+            @foreach (var post in Model.PostTree)
+            {
+                <partial name="/Pages/Discussions/_PostTree.cshtml"
+                         model="post" />
+            }
+        }
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

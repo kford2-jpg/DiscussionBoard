@@ -2,7 +2,6 @@ using DiscussionBoard.Models;
 
 namespace DiscussionBoard.Services
 {
-    /// <summary>Instructor-supplied in-memory tree assembly; students write the EF query, not this algorithm.</summary>
     public static class PostTreeBuilder
     {
         public sealed class Node(Post post)
@@ -24,13 +23,13 @@ namespace DiscussionBoard.Services
             {
                 int? parentId = node.Post.ParentPostId;
 
-                if (parentId.HasValue && // Build the post replies to other posts hierarchy
+                if (parentId.HasValue &&
                     parentId.Value != node.Post.Id &&
                     nodes.TryGetValue(parentId.Value, out Node? parent))
                 {
                     parent.Replies.Add(node);
                 }
-                else // Without a parent post, this is a reply directly to the discussion itself
+                else
                 {
                     roots.Add(node);
                 }
