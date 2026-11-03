@@ -1,8 +1,17 @@
 ﻿@page "/Discussion/{threadId:int}"
 @model DiscussionBoard.Pages.Discussions.DetailsModel
+@using DiscussionBoard.Services
 
 @{
     ViewData["Title"] = Model.Thread?.Title ?? "Discussion";
+
+    var authorName = string.IsNullOrWhiteSpace(Model.Thread?.ApplicationUser?.DisplayName)
+        ? "Unconfigured User"
+        : Model.Thread.ApplicationUser.DisplayName;
+
+    var avatarId = AvatarCatalog.IsValid(Model.Thread?.ApplicationUser?.AvatarId)
+        ? Model.Thread!.ApplicationUser.AvatarId
+        : AvatarCatalog.DefaultId;
 }
 
 <div class="container mt-4">
@@ -16,10 +25,17 @@
 
         <h1>@Model.Thread.Title</h1>
 
-        <p class="text-muted">
-            Started by @(Model.Thread.ApplicationUser?.UserName ?? "Unknown user")
-            · @Model.Thread.CreatedAt.ToLocalTime().ToString("g")
-        </p>
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <img src="@AvatarCatalog.ImagePath(avatarId)"
+                 alt="@authorName avatar"
+                 class="rounded-circle"
+                 style="width:45px;height:45px;object-fit:cover;" />
+
+            <small class="text-muted">
+                Started by <strong>@authorName</strong>
+                · @Model.Thread.CreatedAt.ToLocalTime().ToString("g")
+            </small>
+        </div>
 
         <article class="card mb-4">
             <div class="card-body">

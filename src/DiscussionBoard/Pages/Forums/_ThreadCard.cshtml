@@ -1,23 +1,41 @@
 ﻿@model DiscussionBoard.Models.DiscussionThread
+@using DiscussionBoard.Services
 
-    <article class="card mb-3">
+@{
+    var authorName = string.IsNullOrWhiteSpace(Model.ApplicationUser?.DisplayName)
+        ? "Unconfigured User"
+        : Model.ApplicationUser.DisplayName;
+
+    var avatarId = AvatarCatalog.IsValid(Model.ApplicationUser?.AvatarId)
+        ? Model.ApplicationUser!.AvatarId
+        : AvatarCatalog.DefaultId;
+}
+
+<article class="card mb-3">
     <div class="card-body">
-    <h3 class="h5">
-    <a asp-page="/Discussions/Details"
-asp-route-threadId="@Model.Id">
-                   @Model.Title
-                   </a>
-    </h3>
+        <h3 class="h5">
+            <a asp-page="/Discussions/Details"
+               asp-route-threadId="@Model.Id">
+                @Model.Title
+            </a>
+        </h3>
 
-    <p>
-    @(Model.Content.Length > 180
-        ? Model.Content[..180] + "..."
-        : Model.Content)
-    </p>
+        <p>
+            @(Model.Content.Length > 180
+                ? Model.Content[..180] + "..."
+                : Model.Content)
+        </p>
 
-    <small class="text-muted">
-    Started by @(Model.ApplicationUser?.UserName ?? "Unknown user")
-    · @Model.CreatedAt.ToLocalTime().ToString("g")
-    </small>
+        <div class="d-flex align-items-center gap-2">
+            <img src="@AvatarCatalog.ImagePath(avatarId)"
+                 alt="@authorName avatar"
+                 class="rounded-circle"
+                 style="width:40px;height:40px;object-fit:cover;" />
+
+            <small class="text-muted">
+                Started by <strong>@authorName</strong>
+                · @Model.CreatedAt.ToLocalTime().ToString("g")
+            </small>
+        </div>
     </div>
-    </article>
+</article>

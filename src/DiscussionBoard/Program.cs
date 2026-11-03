@@ -45,12 +45,18 @@ namespace DiscussionBoard
                         !builder.Environment.IsDevelopment())
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
-            builder.Services.AddRazorPages();
+            // Require authentication for forum and discussion pages.
+            builder.Services.AddRazorPages(options =>
+            {
+                options.Conventions.AuthorizeFolder("/Forums");
+                options.Conventions.AuthorizeFolder("/Discussions");
+            });
 
             // Register application services.
             builder.Services.AddScoped<ForumService>();
             builder.Services.AddScoped<DiscussionThreadService>();
             builder.Services.AddScoped<PostService>();
+            builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 
             builder.Services.AddSingleton<ILogReader, JsonLogReader>();
 

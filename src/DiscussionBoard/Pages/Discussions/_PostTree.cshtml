@@ -1,15 +1,33 @@
 ﻿@model DiscussionBoard.Services.PostTreeBuilder.Node
+@using DiscussionBoard.Services
+
+@{
+    var authorName = string.IsNullOrWhiteSpace(Model.Post.ApplicationUser?.DisplayName)
+        ? "Unconfigured User"
+        : Model.Post.ApplicationUser.DisplayName;
+
+    var avatarId = AvatarCatalog.IsValid(Model.Post.ApplicationUser?.AvatarId)
+        ? Model.Post.ApplicationUser!.AvatarId
+        : AvatarCatalog.DefaultId;
+}
 
 <article class="border rounded p-3 mb-3"
          aria-label="Post"
          data-post-id="@Model.Post.Id">
 
-    <p class="mb-1">@Model.Post.Content</p>
+    <div class="d-flex align-items-center gap-2 mb-2">
+        <img src="@AvatarCatalog.ImagePath(avatarId)"
+             alt="@authorName avatar"
+             class="rounded-circle"
+             style="width:40px;height:40px;object-fit:cover;" />
 
-    <small class="text-muted">
-        @Model.Post.ApplicationUser?.UserName —
-        @Model.Post.CreatedAt.ToLocalTime().ToString("g")
-    </small>
+        <small class="text-muted">
+            <strong>@authorName</strong>
+            · @Model.Post.CreatedAt.ToLocalTime().ToString("g")
+        </small>
+    </div>
+
+    <p class="mb-1">@Model.Post.Content</p>
 
     @if (User.Identity?.IsAuthenticated == true)
     {
