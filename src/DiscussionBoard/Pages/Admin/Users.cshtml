@@ -1,19 +1,87 @@
-﻿@page
-@model DiscussionBoard.Pages.Discussions.Users
+@page
+@model DiscussionBoard.Pages.Admin.UsersModel
+@using DiscussionBoard.Authorization
 
 @{
-    Layout = null;
+    ViewData["Title"] = "User Management";
+    var statusIsError = TempData["StatusIsError"] is bool isError && isError;
 }
 
-<!DOCTYPE html>
+<h1>User Management</h1>
+<p>View registered users and manage their Admin role.</p>
 
-<html>
-<head>
-    <title></title>
-</head>
-<body>
-<div>
-    
-</div>
-</body>
-</html>
+@if (TempData["StatusMessage"] != null)
+{
+    <div class="alert @(statusIsError ? "alert-danger" : "alert-success")">
+        @TempData["StatusMessage"]
+    </div>
+}
+
+<div asp-validation-summary="All" class="text-danger"></div>
+
+<form method="get" class="mb-4">
+    <div class="mb-3">
+        <label for="UserId" class="form-label">Select a user</label>
+        <select id="UserId" name="UserId" class="form-select" onchange="this.form.submit()">
+            <option value="">-- Select a user --</option>
+            @foreach (var user in Model.Users)
+            {
+                <option value="@user.Id" selected="@(Model.UserId == user.Id)">
+                    @user.DisplayName (@user.Email)
+                </option>
+            }
+        </select>
+    </div>
+    <noscript><button type="submit" class="btn btn-primary">View User</button></noscript>
+</form>
+
+@if (Model.SelectedUser != null)
+{
+    <section class="card mb-4">
+        <div class="card-body">
+            <h2 class="h4">Selected User</h2>
+            <p><strong>Display Name:</strong> @Model.SelectedUser.DisplayName</p>
+            <p><strong>Email:</strong> @Model.SelectedUser.Email</p>
+            <p><strong>User ID:</strong> @Model.SelectedUser.Id</p>
+            <h3 class="h5 mt-4">Current Roles</h3>
+            @if (Model.SelectedUserRoles.Any())
+            {
+                <ul>
+                    @foreach (var role in Model.SelectedUserRoles)
+                    {
+                        <li>@role</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p>This user has no assigned roles.</p>
+            }
+        </div>
+    </section>
+}
+
+<section class="card">
+    <div class="card-body">
+        <h2 class="h4">Update Admin Role</h2>
+        <form method="post" asp-page-handler="UpdateRole">
+            <input type="hidden" asp-for="UserId" />
+            <input type="hidden" asp-for="SelectedUserId" />
+            <input type="hidden" asp-for="SelectedRole" value="@ApplicationRoles.Admin" />
+            @if (Model.SelectedUserRoles.Contains(ApplicationRoles.Admin, StringComparer.Ordinal))
+            {
+                <input type="hidden" name="RoleAction" value="Remove" />
+                <button type="submit" class="btn btn-outline-danger" disabled="@(Model.SelectedUser == null)">
+                    Remove Admin Role
+                </button>
+            }
+            else
+            {
+                <input type="hidden" name="RoleAction" value="Add" />
+                <button type="submit" class="btn btn-primary" disabled="@(Model.SelectedUser == null)">
+                    Add Admin Role
+                </button>
+            }
+        </form>
+    </div>
+</section>

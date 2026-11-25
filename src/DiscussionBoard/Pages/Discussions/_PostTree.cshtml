@@ -1,5 +1,6 @@
-﻿@model DiscussionBoard.Services.PostTreeBuilder.Node
+@model DiscussionBoard.Services.PostTreeBuilder.Node
 @using DiscussionBoard.Services
+@inject DiscussionBoard.Authorization.IApplicationAuthorizationService AuthorizationService
 
 @{
     var authorName = string.IsNullOrWhiteSpace(Model.Post.ApplicationUser?.DisplayName)
@@ -28,6 +29,16 @@
     </div>
 
     <p class="mb-1">@Model.Post.Content</p>
+
+    @if (await AuthorizationService.CanEditAsync(User, Model.Post))
+    {
+        <a asp-page="/Discussions/EditPost"
+           asp-route-threadId="@Model.Post.DiscussionThreadId"
+           asp-route-postId="@Model.Post.Id"
+           class="btn btn-sm btn-outline-primary">
+            Edit Post
+        </a>
+    }
 
     @if (User.Identity?.IsAuthenticated == true)
     {

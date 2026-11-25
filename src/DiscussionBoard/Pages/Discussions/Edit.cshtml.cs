@@ -1,18 +1,19 @@
-﻿using DiscussionBoard.Authorization;
+using DiscussionBoard.Authorization;
 using DiscussionBoard.Models;
 using DiscussionBoard.Services;
-using DiscussionBoard.ViewModels;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace DiscussionBoard.Pages.Discussions;
+namespace DiscussionBoard.Pages;
 
 [Authorize]
 public class ThreadEditModel : PageModel
 {
     private readonly DiscussionThreadService _threads;
-    private readonly IAuthorizationService _authorization;
+    private readonly IApplicationAuthorizationService _authorization;
+    private readonly ILogger<ThreadEditModel> _logger;
 
     [BindProperty]
     public int Id { get; set; }
@@ -20,12 +21,14 @@ public class ThreadEditModel : PageModel
     [BindProperty]
     public DiscussionEditViewModel Input { get; set; } = new();
 
-    public EditModel(
+    public ThreadEditModel(
         DiscussionThreadService threads,
-        IAuthorizationService authorization)
+        IApplicationAuthorizationService authorization,
+        ILogger<ThreadEditModel> logger)
     {
         _threads = threads;
         _authorization = authorization;
+        _logger = logger;
     }
 
     public async Task<IActionResult> OnGetAsync(int id)
@@ -35,13 +38,13 @@ public class ThreadEditModel : PageModel
         if (thread == null)
             return NotFound();
 
-        var result = await _authorization.AuthorizeAsync(
-            User,
-            thread,
-            ApplicationAuthorizationPolicies.IsOwnerOrAdmin);
-
-        if (!result.Succeeded)
+        if (!await _authorization.CanEditAsync(User, thread))
+        {
+            _logger.LogWarning(
+                "Rejected edit attempt for discussion thread {ThreadId}",
+                thread.Id);
             return Forbid();
+        }
 
         Id = thread.Id;
 
@@ -61,13 +64,13 @@ public class ThreadEditModel : PageModel
         if (thread == null)
             return NotFound();
 
-        var result = await _authorization.AuthorizeAsync(
-            User,
-            thread,
-            ApplicationAuthorizationPolicies.IsOwnerOrAdmin);
-
-        if (!result.Succeeded)
+        if (!await _authorization.CanEditAsync(User, thread))
+        {
+            _logger.LogWarning(
+                "Rejected edit attempt for discussion thread {ThreadId}",
+                thread.Id);
             return Forbid();
+        }
 
         if (!ModelState.IsValid)
             return Page();

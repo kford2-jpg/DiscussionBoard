@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using DiscussionBoard.Models;
 
 namespace DiscussionBoard.Services
@@ -30,6 +30,10 @@ namespace DiscussionBoard.Services
             {
                 logFiles = Directory.GetFiles(_logDirectory, "*.json");
             }
+            catch (DirectoryNotFoundException)
+            {
+                return Array.Empty<LogEntry>();
+            }
             catch (IOException e)
             {
                 _logger.LogError(e, "Could not read log files from {LogDirectory}", _logDirectory);
@@ -48,9 +52,9 @@ namespace DiscussionBoard.Services
                         continue;
                     }
                 }
-                catch (Exception e)
+                catch (IOException e) when ((e.HResult & 0xFFFF) is 32 or 33)
                 {
-                    _logger.LogError(e, "Could not read log file {LogFile}", logFile);
+                    _logger.LogWarning(e, "Skipping log file currently in use: {LogFile}", logFile);
                     continue;
                 }
 
@@ -63,6 +67,7 @@ namespace DiscussionBoard.Services
                 catch (IOException e)
                 {
                     _logger.LogError(e, "Could not read log entry in file {LogFile}", logFile);
+                    throw;
                 }
             }
 

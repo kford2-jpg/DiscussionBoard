@@ -1,17 +1,19 @@
 
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using DiscussionBoard.Authorization;
 using DiscussionBoard.Data;
 using DiscussionBoard.Models;
 using DiscussionBoard.Services;
 using Serilog;
-using Serilog.Formatting.Compact;
+
 
 namespace DiscussionBoard
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -20,15 +22,11 @@ namespace DiscussionBoard
                 "Logs",
                 "discussionboard-.json");
 
+            builder.Configuration["Serilog:WriteTo:1:Args:configure:0:Args:path"] =
+                logPath;
+
             builder.Services.AddSerilog((services, configuration) =>
-                configuration
-                    .WriteTo.Console()
-                    .WriteTo.File(
-                        new RenderedCompactJsonFormatter(),
-                        logPath,
-                        rollingInterval: RollingInterval.Day,
-                        shared: true)
-            );
+                configuration.ReadFrom.Configuration(builder.Configuration));
 
             var connectionString =
                 builder.Configuration.GetConnectionString("DefaultConnection")
@@ -40,10 +38,37 @@ namespace DiscussionBoard
 
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+            // Identity with role support.
             builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
                     options.SignIn.RequireConfirmedAccount =
                         !builder.Environment.IsDevelopment())
+                .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
+
+            // Strengthen authentication cookie security.
+            builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+            });
+
+            // Register authorization policies and handlers.
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy(
+                    ApplicationAuthorizationPolicies.IsOwnerOrAdmin,
+                    policy =>
+                    {
+                        policy.RequireAuthenticatedUser();
+                        policy.AddRequirements(
+                            new IsOwnerOrAdminRequirement());
+                    });
+            });
+
+            builder.Services.AddScoped<
+                IAuthorizationHandler,
+                IsOwnerOrAdminHandler>();
 
             // Require authentication for forum and discussion pages.
             builder.Services.AddRazorPages(options =>
@@ -57,6 +82,10 @@ namespace DiscussionBoard
             builder.Services.AddScoped<DiscussionThreadService>();
             builder.Services.AddScoped<PostService>();
             builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+
+            builder.Services.AddScoped<
+                IApplicationAuthorizationService,
+                ApplicationAuthorizationService>();
 
             builder.Services.AddSingleton<ILogReader, JsonLogReader>();
 

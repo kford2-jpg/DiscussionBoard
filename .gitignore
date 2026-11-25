@@ -36,3 +36,6 @@ Thumbs.db
 **/coverage.cobertura.xml
 **/*.coverage
 **/*.coveragexml
+
+# ZAP local certificates and reports
+zap-reports/

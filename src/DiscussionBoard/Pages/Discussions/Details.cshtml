@@ -1,6 +1,7 @@
-﻿@page "/Discussion/{threadId:int}"
+@page "/Discussion/{threadId:int}"
 @model DiscussionBoard.Pages.Discussions.DetailsModel
 @using DiscussionBoard.Services
+@inject DiscussionBoard.Authorization.IApplicationAuthorizationService AuthorizationService
 
 @{
     ViewData["Title"] = Model.Thread?.Title ?? "Discussion";
@@ -41,9 +42,7 @@
             <div class="card-body">
                 <p>@Model.Thread.Content</p>
 
-                @if (User.Identity?.IsAuthenticated == true &&
-                     User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-                     == Model.Thread.ApplicationUserId)
+                @if (await AuthorizationService.CanEditAsync(User, Model.Thread))
                 {
                     <a asp-page="/Discussions/Edit"
                        asp-route-id="@Model.Thread.Id"

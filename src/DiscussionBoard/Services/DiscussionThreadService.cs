@@ -1,4 +1,4 @@
-﻿using DiscussionBoard.Data;
+using DiscussionBoard.Data;
 using DiscussionBoard.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -78,6 +78,10 @@ namespace DiscussionBoard.Services
             {
                 _context.DiscussionThreads.Add(thread);
                 await _context.SaveChangesAsync();
+                _logger.LogInformation(
+                    "Discussion thread {ThreadId} created in forum {ForumId}",
+                    thread.Id,
+                    thread.ForumId);
             }
             catch (Exception ex)
             {
